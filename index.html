@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Osprey</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts (for fallback and body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* ADDED: Force root background to black */
+        /* REPLACED with dynamic background */
+        html {
+            background-color: #ffffff; /* Default light mode */
+        }
+        @media (prefers-color-scheme: dark) {
+            html {
+                background-color: #000000; /* Dark mode */
+            }
+        }
+
+        /* 1. Load the custom font from the local file */
+        @font-face {
+            font-family: 'Cadass Script Demo';
+            src: url('assets/Cadass Script Demo.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap; /* Helps with loading */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            /* REMOVED: Solid background is removed, html provides it */
+        }
+        @media (prefers-color-scheme: dark) {
+            body {
+                /* REMOVED: Solid background is removed */
+            }
+        }
+
+
+        /* --- Hide Scrollbar --- */
+        html, body {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+        /* --- End Hide Scrollbar --- */
+
+        /* ADDED: Hide scrollbar for the how-to-play panel */
+        #hero-panel-back {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        #hero-panel-back::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        /* 2. Apply the font stack */
+        .font-logo {
+            font-family: 'Cadass Script Demo', 'DM Serif Display', serif;
+        }
+        .font-title-serif {
+            font-family: 'DM Serif Display', serif;
+        }
+
+        /* Styles for the gallery slider */
+        .slider-image {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.5s ease-in-out;
+            opacity: 0;
+        }
+        .slider-image.active {
+            opacity: 1;
+        }
+        /* Custom button styling for circular shape */
+        .slider-nav-btn {
+            width: 2.5rem; /* 40px */
+            height: 2.5rem; /* 40px */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px; /* full circle */
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            font-size: 1.25rem; /* 20px */
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        .slider-nav-btn:hover {
+            background-color: rgba(0, 0, 0, 0.75);
+        }
+
+        /* Style for any hyperlinks added to the info section */
+        #info-section a {
+            color: #2563EB; /* text-blue-600 */
+            text-decoration: underline;
+        }
+        #info-section a:hover {
+            color: #1D4ED8; /* text-blue-800 */
+        }
+
+        /* Dark mode styles for custom link (uses OS preference) */
+        @media (prefers-color-scheme: dark) {
+            #info-section a {
+                color: #60A5FA; /* text-blue-400 */
+            }
+            #info-section a:hover {
+                color: #93C5FD; /* text-blue-300 */
+            }
+        }
+
+        /* --- Tab Styles --- */
+        .tab-btn.active-tab {
+            opacity: 1;
+            /* font-weight: 600; */ /* semibold - Removed this line */
+            border-bottom: 2px solid #000; /* CHANGED: Default for light mode */
+        }
+        /* ADDED: Dark mode override for tab */
+        @media (prefers-color-scheme: dark) {
+            .tab-btn.active-tab {
+                border-bottom: 2px solid #FFF;
+            }
+        }
+        /* Removed dark mode override, as it's always white now */
+
+
+        /* --- REWRITTEN Tab Content Styles (No-Shift) --- */
+
+        /* 1. This container uses CSS Grid to stack all panels
+           in the exact same spot (1st row, 1st column). */
+        #content-area {
+            display: grid;
+            grid-template-areas: "stack"; /* Define a single grid area */
+            /* width: 100%; <--- REMOVED (Handled by Tailwind class) */
+            /* max-width: 7xl; <--- REMOVED (Invalid, Handled by Tailwind class) */
+            position: relative; /* Ensure it's a positioning context */
+            z-index: 10; /* Keep it above the animation */
+        }
+
+        /* 2. All tab panels are placed in that single "stack" area. */
+        .tab-panel {
+            grid-area: stack; /* Assign all panels to the same area */
+            width: 100%; /* ADDED: Ensure panels fill the grid area */
+
+            /* 3. By default, panels are faded out and hidden. */
+            opacity: 0;
+            visibility: hidden;
+
+            /* 4. Transition opacity normally.
+               When fading OUT (becoming hidden), delay the visibility change
+               until the opacity fade is finished (200ms). */
+            transition: opacity 200ms ease-in-out, visibility 0s linear 200ms;
+        }
+
+        /* 5. The 'active' panel is made visible and fades in. */
+        .tab-panel.active {
+            opacity: 1;
+            visibility: visible;
+
+            /* 6. When fading IN (becoming visible), apply visibility
+               change immediately (0s delay) so it can fade. */
+            transition: opacity 200ms ease-in-out, visibility 0s linear 0s;
+        }
+
+        /* --- END REWRITTEN Tab Content Styles --- */
+
+
+        /* Styles for logo button */
+        #logo-btn {
+            border-radius: 0.5rem; /* rounded-lg */
+            transition: all 0.2s ease-in-out;
+        }
+        #logo-btn:focus-visible {
+            outline: 2px solid #2563EB; /* blue-600 */
+            outline-offset: 2px;
+        }
+
+        /* REMOVED: .fading-out styles are no longer needed */
+        /* REMOVED: #tab-content-container styles are no longer needed */
+
+
+        /* --- Blob Animation Styles (ADDED) --- */
+        .animation-container {
+            /* CHANGED: Back to absolute so it scrolls with page */
+            position: absolute;
+            /* CHANGED: Use 100% height to match document scroll */
+            width: 100vw;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0; /* Sits behind all content */
+
+            /* ADDED: Transition logic for hiding/showing */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 200ms ease-in-out, visibility 0s linear 200ms;
+            /* ADDED: Performance hint */
+            will-change: opacity, visibility;
+        }
+
+        /* ADDED: Active state for animation container */
+        .animation-container.active {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 200ms ease-in-out, visibility 0s linear 0s;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            /* CHANGED: Slightly reduced blur for performance */
+            filter: blur(60px);
+            /* CHANGED: Start invisible */
+            opacity: 0;
+            mix-blend-mode: multiply; /* CHANGED: Default for light mode */
+            /* ADDED: Performance hint for the browser */
+            will-change: transform, opacity, top, left; /* ADDED top/left */
+
+            /* Start all blobs at 0,0 - JS will set center point */
+            top: 0;
+            left: 0;
+
+            /* Set initial transform
+               This translate centers the blob on its top/left coordinate */
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* --- Blob Definitions --- */
+        .blob1 {
+            width: 450px;
+            height: 450px;
+            background: rgba(88, 86, 214, 0.5); /* Indigo */
+        }
+
+        .blob2 {
+            width: 350px;
+            height: 350px;
+            background: rgba(0, 122, 255, 0.4); /* Blue */
+        }
+
+        .blob3 {
+            width: 250px;
+            height: 250px;
+            background: rgba(100, 20, 150, 0.5); /* Dark Purple */
+        }
+
+        .blob4 {
+            width: 200px;
+            height: 200px;
+            background: rgba(10, 132, 255, 0.5); /* Bright Blue */
+        }
+
+        /* ADDED: New blob styles */
+        .blob5 {
+            width: 400px;
+            height: 400px;
+            background: rgba(85, 0, 255, 0.5);
+        }
+
+        .blob6 {
+            width: 300px;
+            height: 300px;
+            background: rgba(0, 0, 255, 0.5);
+        }
+
+        /* ADDED: New blob styles */
+        .blob7 {
+            width: 380px;
+            height: 380px;
+            background: rgba(120, 80, 220, 0.5); /* Light Purple */
+        }
+
+        .blob8 {
+            width: 280px;
+            height: 280px;
+            background: rgba(0, 180, 220, 0.4); /* Cyan Blue */
+        }
+
+        /* ADDED: New blob styles */
+        .blob9 {
+            width: 320px;
+            height: 320px;
+            background: rgba(40, 100, 255, 0.5); /* Medium Blue */
+        }
+
+        .blob10 {
+            width: 220px;
+            height: 220px;
+            background: rgba(160, 50, 200, 0.45); /* Medium Purple */
+        }
+
+        /* ADDED: Dark mode override for blobs */
+        @media (prefers-color-scheme: dark) {
+            .blob {
+                mix-blend-mode: screen;
+                /* CHANGED: Removed opacity override, JS now handles fade-in to 1 */
+                /* opacity: 0.7; */
+            }
+        }
+        /* --- End Blob Animation Styles --- */
+
+
+        /* --- ADDED: Hero Panel Flip Styles --- */
+
+        /* When main-panel is flipped... */
+
+        /* ...fade out the background image */
+        #main-panel.is-flipped #hero-bg-image {
+            opacity: 0;
+        }
+
+        /* ...fade out the front panel */
+        #main-panel.is-flipped #hero-panel-front {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* ...fade in the back panel */
+        #main-panel.is-flipped #hero-panel-back {
+            opacity: 1;
+            visibility: visible;
+        }
+        /* --- END: Hero Panel Flip Styles --- */
+
+    </style>
+</head>
+<!-- Removed bg-white dark:bg-[#000000] as body style now handles it -->
+<!-- REMOVED pb-96 -->
+<!-- REMOVED: Solid background from body -->
+<body class="p-4 sm:p-6 md:p-8 min-h-screen flex flex-col items-center justify-start">
+
+    <!-- Background Animation Container (MOVED BACK to global) -->
+    <div class="animation-container">
+        <div class="blob blob1"></div>
+        <div class="blob blob2"></div>
+        <div class="blob blob3"></div>
+        <div class="blob blob4"></div>
+        <!-- ADDED: New blob HTML -->
+        <div class="blob blob5"></div>
+        <div class="blob blob6"></div>
+        <!-- ADDED: More blob HTML -->
+        <div class="blob blob7"></div>
+        <div class="blob blob8"></div>
+        <!-- ADDED: Even more blob HTML -->
+        <div class="blob blob9"></div>
+        <div class="blob blob10"></div>
+    </div>
+    <!-- END: Background Animation Container -->
+
+
+    <!-- Header with Logo and Tab Navigation -->
+    <!-- ADDED z-10 to lift it above the animation -->
+    <header class="relative w-full max-w-7xl flex items-center justify-center mb-6 z-10">
+        <!-- Left Tabs Container -->
+        <div class="absolute left-0 top-1/2 -translate-y-1/2 flex items-center gap-1 sm:gap-2">
+            <!-- Info Tab -->
+            <!-- ADDED data-tab attribute -->
+            <button id="info-tab-btn" data-tab="info" class="tab-btn font-title-serif text-xl text-gray-800 dark:text-gray-300 opacity-80 px-4 py-2">
+                info
+            </button>
+            <!-- Map Link -->
+            <a href="https://map.osprey.build" class="tab-btn font-title-serif text-xl text-gray-800 dark:text-gray-300 opacity-80 px-4 py-2 hover:opacity-100 transition-opacity">
+                map
+            </a>
+        </div>
+
+        <!-- Logo (Button to return to main page) -->
+        <!-- ADDED data-tab attribute -->
+        <button id="logo-btn" data-tab="main" class="shrink-0">
+            <!-- Light Mode Logo -->
+            <img
+                src="assets/logo-black.png"
+                alt="Osprey logo (return to home)"
+                class="w-20 h-20 rounded-lg block dark:hidden"
+                onerror="this.style.display='none'"
+            >
+            <!-- Dark Mode Logo -->
+            <img
+                src="assets/logo-white.png"
+                alt="Osprey logo (return to home)"
+                class="w-20 h-20 rounded-lg hidden dark:block"
+                onerror="this.style.display='none'"
+            >
+        </button>
+
+        <!-- Builds Tab -->
+        <!-- ADDED data-tab attribute -->
+        <button id="builds-tab-btn" data-tab="builds" class="tab-btn font-title-serif absolute right-0 top-1/2 -translate-y-1/2 text-xl text-gray-800 dark:text-gray-300 opacity-80 px-4 py-2">
+            builds
+        </button>
+    </header>
+
+    <!--
+      NEW STRUCTURE:
+      - A single #content-area wrapper (which is a CSS Grid container).
+      - All three panels are direct children and will be stacked by the CSS.
+      - Removed the old #tab-content-container wrapper.
+    -->
+    <!-- EDITED: Added w-full max-w-7xl to match header -->
+    <div id="content-area" class="w-full max-w-7xl">
+
+        <!-- Main Page Content (Hero + Screenshots/Info) -->
+        <!-- This div wraps all main page content and is now a tab panel -->
+        <!-- ADDED relative, z-10, data-panel, and tab-panel class -->
+        <!-- REMOVED w-full max-w-7xl (handled by parent) -->
+        <!-- REMOVED conflicting transition-opacity classes -->
+        <div id="main-page-content" data-panel="main" class="tab-panel"> <!-- REMOVED w-full, handled by .tab-panel CSS -->
+            <!-- Main Osprey Panel -->
+            <!-- This panel is relative and has overflow-hidden,
+                 which will contain the blob animation -->
+            <!-- ID "main-panel" is ADDED for JS to find it -->
+            <!-- ADDED: transition-all for background color change -->
+            <main id="main-panel" class="relative w-full h-[70vh] rounded-2xl overflow-hidden transition-all duration-500 ease-in-out">
+
+                <!-- Background Image (RESTORED) -->
+                <!-- ADDED: id and transition classes -->
+                <img
+                    src="assets/hero.png"
+                    onerror="this.src='https://placehold.co/1600x900/4A8D3E/FFFFFF?text=Osprey+Server';this.onerror=null;"
+                    alt="Minecraft server landscape"
+                    id="hero-bg-image"
+                    class="absolute inset-0 w-full h-full object-cover blur-sm scale-110 transition-opacity duration-500 ease-in-out"
+                >
+
+                <!-- Animation Container REMOVED from here -->
+
+                <!-- Panel Front (Original Content) -->
+                <!-- ADDED: Wrapper div for front panel with ID and transitions -->
+                <div id="hero-panel-front" class="absolute inset-0 transition-all duration-500 ease-in-out z-10 opacity-100 visible">
+                    <!-- Content Overlay -->
+                    <!-- This z-10 ensures text is on top of the animation (z-1) -->
+                    <!-- CHANGED: z-10 to z-0 as parent is z-10 -->
+                    <div class="relative z-0 h-full w-full flex flex-col items-center justify-center text-center text-white p-8 bg-black bg-opacity-40">
+
+                        <!-- Title -->
+                        <h1 class="text-6xl sm:text-7xl md:text-8xl font-regular tracking-tight font-logo">
+                            Osprey
+                        </h1>
+
+                        <!-- Description -->
+                        <p class="mt-4 text-xl sm:text-2xl max-w-lg text-gray-200">
+                            an enhanced vanilla crossplay <br>Minecraft survival server.
+                        </p>
+
+                        <!-- Buttons Container -->
+                        <div class="mt-8"> <!-- This div allows the inline-flex below to be centered by its parent -->
+
+                            <!-- This container sets the width for the button below -->
+                            <div class="inline-flex flex-col gap-3">
+
+                                <!-- IP & "How to Play" Container -->
+                                <!-- UPDATED: Changed transition-all to transition-transform -->
+                                <div class="inline-flex flex-col sm:flex-row rounded-lg shadow-md transition-transform duration-200 transform hover:scale-105">
+                                    <!-- IP Part -->
+                                    <div class="bg-gray-800 bg-opacity-40 backdrop-blur-sm px-5 py-3 rounded-t-lg sm:rounded-l-lg sm:rounded-tr-none">
+                                        <span class="text-lg sm:text-xl font-mono tracking-wide">osprey.build</span>
+                                    </div>
+
+                                    <!-- How to Play Tooltip -->
+                                    <!-- REMOVED: Relative wrapper -->
+                                    <!-- CHANGED: div to button, removed group/tooltip, added id -->
+                                    <button id="how-to-play-btn" class="bg-white text-black text-lg font-semibold text-center px-8 py-3 hover:bg-gray-100 cursor-pointer rounded-b-lg sm:rounded-r-lg sm:rounded-bl-none transition-colors">
+                                        how do I join?
+                                    </button>
+                                </div>
+
+                                <!-- Discord Button -->
+                                <!-- UPDATED: Changed transition-all to transition-transform and transition-colors -->
+                                <a
+                                    href="https://osprey.build/discord"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="block w-full px-8 py-3 bg-[#5865F2] text-white text-lg font-semibold rounded-lg shadow-md hover:bg-opacity-90 text-center transition-transform transition-colors duration-200 transform hover:scale-105"
+                                >
+                                    join our Discord
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
+                </div> <!-- End #hero-panel-front -->
+
+                <!-- Panel Back (How to Play Content) -->
+                <!-- ADDED: New panel for "How to Play" content -->
+                <!-- UPDATED: Changed dark:bg-gray-900 to dark:bg-black and added inner shadow for outline -->
+                <!-- UPDATED: Added rounded-2xl to match parent panel -->
+                <!-- NOTE: overflow-y-auto is KEPT to enable scrolling, CSS rule hides the bar -->
+                <div id="hero-panel-back" class="absolute inset-0 transition-all duration-500 ease-in-out z-20 bg-white dark:bg-black text-black dark:text-white p-8 opacity-0 invisible overflow-y-auto shadow-[inset_0_0_0_2px_#dedede] dark:shadow-[inset_0_0_0_2px_#141414] rounded-2xl">
+                    <!-- Content for the back -->
+                    <div class="max-w-3xl mx-auto">
+                        <button id="back-to-main-btn" class="mb-4 text-lg font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                            &lt; back
+                        </button>
+                        <h2 class="text-4xl font-title-serif mb-6 text-center">how to join</h2>
+                        <div class="space-y-4 text-lg">
+                            <p>welcome to Osprey! we're excited to have you. to join the server, you need to follow these simple instructions. this helps keeping our community safe.</p>
+
+                            <!-- MODIFIED: "Step 1" now includes the button -->
+                            <div class="pt-4"> <!-- This div gets the pt-4 from the original h3 -->
+                                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                                    <h3 class="text-2xl font-title-serif shrink-0">step 1:</h3>
+                                    <!-- COPIED Discord Button -->
+                                    <a
+                                        href="https://osprey.build/discord"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="block sm:inline-block w-full sm:w-auto px-8 py-3 bg-[#5865F2] text-white text-lg font-semibold rounded-lg shadow-md hover:bg-opacity-90 text-center transition-transform transition-colors duration-200 transform hover:scale-105"
+                                    >
+                                        join our Discord
+                                    </a>
+                                </div>
+                                <p class="mt-4">everything starts in our Discord server. click the button to join.</p>
+                            </div>
+
+                            <h3 class="text-2xl font-title-serif pt-4" style="color: #ff545a; text-decoration: underline;">step 2: read the rules!</h3>
+                            <p>once you're in our Discord server, go to the <strong># 🚸・rules</strong> channel and read all the rules thoroughly. you need to comply with these rules in order to play, and if you fail to do this, <u><strong>you may get banned without any warning.</strong></u></p>
+                            <h3 class="text-2xl font-title-serif pt-4">step 3a: connect to Minecraft server</h3>
+                            <p>you need to link your Minecraft account to your Discord account. the process is pretty easy. you need to obtain a 4-digit code by joining the Minecraft server once.</p>
+                            <p>Java IP: <code>osprey.build</code></p>
+                            <p>Bedrock IP: <code>bedrock.osprey.build</code><br>Bedrock Port: <code>default (19132)</code></p>
+                            <p>you will get kicked when you join, with a message containing your 4-digit code.<br>it will look like this:</p>
+                            <img src="assets/step3a.png" alt="step 3a: kick message with 4-digit code" class="w-full max-w-lg mr-auto rounded-lg my-4 shadow-md" onerror="this.src='https://placehold.co/800x400/CCCCCC/FFFFFF?text=step3a.png+not+found';this.onerror=null;">
+                            <h3 class="text-2xl font-title-serif pt-4">step 3b: message our Discord bot</h3>
+                            <p>got the code? great! now you need to send this code to our Discord bot named "Osprey". you'll spot it on the top of member list. just message the 4-digit code, nothing else.</p>
+                            <!-- ADDED IMAGE FOR STEP 3B -->
+                            <img src="assets/step3b.png" alt="step 3b: messaging the Discord bot" class="w-full max-w-lg mr-auto rounded-lg my-4 shadow-md" onerror="this.src='https://placehold.co/800x400/CCCCCC/FFFFFF?text=step3b.png+not+found';this.onerror=null;">
+                            <h3 class="text-2xl font-title-serif pt-4">step 4: all done!</h3>
+                            <p>if you did all these steps correctly, congrats! you can now re-join the Minecraft server and start playing!</p>
+                            <p class="pt-4 font-semibold">we can't wait to see you online!</p>
+                        </div>
+                    </div>
+                </div> <!-- End #hero-panel-back -->
+
+
+            </main>
+
+            <!-- Info & Screenshots Sections -->
+            <!-- REMOVED: Solid background -->
+            <!-- EDITED: Replaced md:px-0 with px-4 for alignment -->
+            <div class="w-full grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6 px-4 mb-12">
+
+                <!-- Screenshots Section (Left) -->
+                <section>
+                    <p class="text-3xl text-black dark:text-white font-title-serif text-center lg:text-left">
+                        screenshots
+                    </p>
+
+                    <!-- Slider Container -->
+                    <div class="relative w-full h-80 sm:h-96 mt-4 rounded-2xl overflow-hidden shadow-md">
+
+                        <!-- Images -->
+                        <img src="assets/screenshots1.png" alt="Screenshot 1" class="slider-image active" onerror="this.src='https://placehold.co/800x600/CCCCCC/FFFFFF?text=Screenshot+1';this.onerror=null;">
+                        <img src="assets/screenshots2.png" alt="Screenshot 2" class="slider-image" onerror="this.src='https://placehold.co/800x600/CCCCCC/FFFFFF?text=Screenshot+2';this.onerror=null;">
+                        <img src="assets/screenshots3.png" alt="Screenshot 3" class="slider-image" onerror="this.src='https://placehold.co/800x600/CCCCCC/FFFFFF?text=Screenshot+3';this.onerror=null;">
+                        <img src="assets/screenshots4.png" alt="Screenshot 4" class="slider-image" onerror="this.src='https://placehold.co/800x600/CCCCCC/FFFFFF?text=Screenshot+4';this.onerror=null;">
+
+                        <!-- Navigation Buttons -->
+                        <div class="absolute bottom-4 right-4 z-10 flex flex-row gap-2">
+                            <button id="prevBtn" class="slider-nav-btn">
+                                &lt;
+                            </button>
+                            <button id="nextBtn" class="slider-nav-btn">
+                                &gt;
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Info Section (Right) -->
+                <section id="info-section">
+                    <p class="text-3xl text-black dark:text-white font-title-serif text-center lg:text-left">
+                        brief info
+                    </p>
+
+                    <!-- Info Text Content -->
+                    <div class="mt-4 text-lg text-gray-700 dark:text-gray-300 text-center lg:text-left space-y-4">
+                        <p>
+                            Osprey is an enhanced vanilla Java/Bedrock cross-compatible Minecraft server based on the latest game version.
+                        </p>
+                        <p>Our server features:</p>
+                        <ul style="list-style-type: disc; list-style-position: inside;">
+                            <li>enhanced terrain and new vanilla-like world structures</li>
+                            <li>additional enchantments, animations and quality-of-life fixes</li>
+                            <li>Discord chat integration</li>
+                            <li>in-game voice chat support (Java only)</li>
+                        </ul>
+                        <p>
+                            We have also a silly lore, make events around it and post event recaps on our <a href="https://www.youtube.com/@OspreyMC">YouTube channel!</a>
+                        </p>
+                        <p>
+                            click the <strong>"how do I join?"</strong> button above to see instructions on joining.
+                        </p>
+                    </div>
+                </section>
+            </div>
+        </div><!-- End of #main-page-content panel -->
+
+
+        <!-- Tab Content (Now a sibling) -->
+        <!-- REMOVED #tab-content-container -->
+
+        <!-- Info Tab Panel -->
+        <!-- ADDED data-panel and tab-panel class -->
+        <!-- REMOVED old tab-content class -->
+        <!-- REMOVED: Solid background -->
+        <!-- EDITED: Added px-4 for alignment -->
+        <div id="info-tab-content" data-panel="info" class="tab-panel text-black dark:text-white py-12 px-4"> <!-- REMOVED w-full, handled by .tab-panel CSS -->
+            <h2 class="text-4xl font-title-serif mb-4">what?</h2>
+            <p class="text-lg">
+            Osprey is a long-running Minecraft community that’s been around in one form or another since early 2020. the server has gone through countless worlds, stories, and eras — all shaped by the people worldwide who played through them.<br><br>
+            to date, <strong>over 2000 individual players</strong> have played Osprey at one point!<br><br>
+            today, Osprey runs as a vanilla Java/Bedrock crossplay server, focused on keeping Minecraft’s classic feel while adding small features and new things that make the world feel alive.
+            </p><br>
+            <h2 class="text-4xl font-title-serif mb-4">when?</h2>
+            <div class="space-y-4 text-lg">
+                <h3 class="text-3xl font-title-serif mt-6 mb-3">the golden age (march 2020 – june 2020)</h3>
+                <p class="italic">the creation, and the rise of Osprey</p>
+                <p>Osprey was created on march 3, 2020 as a small 10-player Minecraft realm that quickly grew into a tight community. season 1 set the foundation of a simple survival world, friendly chaos, and a small but active playerbase.</p>
+                <p>season 2 expanded things fast. admins like Kevin, Freeman, Bosscore, and Kiro helped shape the world’s early identity. “the mall” was built and flooded (twice), the first organized PvP weekend happened, and the community started becoming many people's escape from "Covid".</p>
+                <p>season 3 is remembered as Osprey’s peak — themed around ancient Greece, with admins roleplaying as gods (Zeus, Hades, Poseidon, etc.). the realm stayed full 24/7 (a legendary feat back then), people waited to join, and countless iconic players joined. creativity, community, and nonstop happenings defined this era.</p>
+                <!-- ADDED IMAGE FOR S1 -->
+                <img src="assets/s1.png" alt="Season 1 archival photograph" class="w-full max-w-lg mr-auto rounded-lg my-4 shadow-md" onerror="this.src='https://placehold.co/800x600/CCCCCC/FFFFFF?text=s1.png+not+found';this.onerror=null;">
+                <p class="italic">season 1 archival photographs</p>
+                <hr class="my-6 border-gray-300 dark:border-gray-700">
+                <h3 class="text-3xl font-title-serif mt-6 mb-3">delving into the mainstream (late 2020)</h3>
+                <p class="italic">rivalry, drama, and the fall of the old community</p>
+                <p>as Osprey grew, it became tied into the larger “Realms community.” this led to months of rivalry and chaos known as the Yosho drama arc, a drawn-out feud between Osprey and another popular realm community.</p>
+                <p>the situation escalated into raids, mass bans, and doxxing — it unified players for a time, but ultimately burned everyone out. internally, admins began arguing, the playerbase split, and morale dropped.</p>
+                <p>external drama, burnout, and internal tension ended the golden age and pushed the realm into temporary decline with several notable admins quitting or ghosting the server.</p>
+                <!-- ADDED IMAGE FOR S3 -->
+                <img src="assets/s3.png" alt="The final days of season 3" class="w-full max-w-lg mr-auto rounded-lg my-4 shadow-md" onerror="this.src='https://placehold.co/800x600/CCCCCC/FFFFFF?text=s3.png+not+found';this.onerror=null;">
+                <p class="italic">the final days of season 3</p>
+                <hr class="my-6 border-gray-300 dark:border-gray-700">
+                <h3 class="text-3xl font-title-serif mt-6 mb-3">the hype seasons (early 2021)</h3>
+                <p class="italic">explosive growth and chaos</p>
+                <p>after the Yosho fallout, Osprey rebooted bigger than ever with seasons 5 and 6. these were the “hype” seasons — flashy builds, new factions, massive wars, and up to 1,000 members total (around 60+ active joins daily).</p>
+                <blockquote class="border-l-4 border-gray-500 dark:border-gray-400 pl-4 my-4">
+                    Osprey was the first (and only) realm in history that achieved a legendary 30 player cap solely on Bedrock. this was achieved with an expensive, experimental virtualized Xboxes that would host the world — the Xbox multiplayer had a cap of 30 players, whereas Realms had 11 (10 + owner). this was before the days of crossplay and Osprey was the one of largest Bedrock Realms in history due to this unique pioneering step.
+                </blockquote>
+                <p>it was the most ambitious Osprey ever got. the server reached new heights in scale and reputation, with faction systems, world events, and player-led storylines. but the pace was unsustainable, and burnout crept back in.</p>
+                <!-- ADDED IMAGE FOR S6/7 -->
+                <img src="assets/s67.png" alt="Historical photographs - pre war preparations" class="w-full max-w-lg mr-auto rounded-lg my-4 shadow-md" onerror="this.src='https://placehold.co/800x600/CCCCCC/FFFFFF?text=s67.png+not+found';this.onerror=null;">
+                <p class="italic">historical photographs - pre war preparations during christmas/new years</p>
+                <hr class="my-6 border-gray-300 dark:border-gray-700">
+                <h3 class="text-3xl font-title-serif mt-6 mb-3">the decline (seasons 7–10, ended september 2021)</h3>
+                <p class="italic">instability, new servers, and collapse</p>
+                <p>Osprey eventually moved off Realms, experimenting with crossplay, plugins, and eventually full modded setups like Osprey MMO — featuring dungeons, mobs, and custom systems.</p>
+                <blockquote class="border-l-4 border-gray-500 dark:border-gray-400 pl-4 my-4">
+                    Osprey was one of the first servers to be a crossplay server, paying for Patreon gated access to Geyser and Floodgate, finally uniting the Java and Bedrock playerbases into one giant community.
+                </blockquote>
+                <p>although the server hit an all time 1600 player peak, that was it for the Osprey of old.</p>
+                <p>huge creative builds like Wysteria and Drugsville defined this late era, but technical issues, lag, and constant resets frustrated players. by season 9, doxxing, griefing, and admin disputes had taken over.
+                season 10 (Osprey X, egyptian themed) barely lasted a few weeks before the community went inactive and Kevin stepped away.</p>
+                <!-- ADDED IMAGE FOR S8/9/10 -->
+                <img src="assets/s8910.png" alt="Season 8, 9, and 10 photos" class="w-full max-w-lg mr-auto rounded-lg my-4 shadow-md" onerror="this.src='https://placehold.co/800x600/CCCCCC/FFFFFF?text=s8910.png+not+found';this.onerror=null;">
+                <p class="italic">pictured left from right - season 8 mmo area - season 9 group photo - season 10 end</p>
+                <hr class="my-6 border-gray-300 dark:border-gray-700">
+                <h3 class="text-3xl font-title-serif mt-6 mb-3">legacy</h3>
+                <p>Osprey started as a small 10-player Bedrock realm in 2020, founded by Kevin and went on to become one of the most influential Minecraft servers of its era. it grew into the largest Bedrock realm ever made, (literally the biggest realm in a collection of 40+ other gigantic networks, and the most popular community voted one) — known for its scale, events, and community impact. (putting it very gently)</p>
+                <p>at its peak, Osprey was one of the first servers to push the limits of what a Bedrock world could be — hosting 30-player Realms, something unheard of at the time, and eventually becoming one of the first to bridge Bedrock and Java players together using Geyser and pioneering the popularity of platform bridging.</p>
+                <p>many of the features and community structures common in today’s Reddit survival servers — world event roleplay, player-driven lore, and hybrid crossplay setups — can trace roots back to experiments that happened on Osprey.</p>
+                <p>if you played on a Bedrock SMP during 2020–2021, there’s a good chance you joined Osprey at some point — or at least played on a server influenced by it.</p>
+                <p class="italic"><strong>OG Osprey still lives in infamy to those who know and remember what it was.</strong></p>
+                <!-- ADDED IMAGE FOR LEGACY LOGO -->
+                <img src="assets/legacylogo.png" alt="Osprey legacy logo" class="w-full max-w-lg mr-auto rounded-lg my-4 shadow-md" onerror="this.src='https://placehold.co/800x600/CCCCCC/FFFFFF?text=legacylogo.png+not+found';this.onerror=null;">
+                <p class="italic">written with love by hyun (krat)</p>
+            </div>
+            <br>
+            <h2 class="text-4xl font-title-serif mb-4">how?</h2>
+            <p class="text-lg">
+            we use a high-spec VPS located at United Kingdom to host the server.<br>
+            the specs are as follows:
+            </p><br>
+            <ul class="text-lg" style="list-style-type: disc; list-style-position: inside;">
+                <li>AMD EPYC-Milan processor - 8 cores</li>
+                <li>16GB memory</li>
+                <li>200GB storage</li>
+            </ul><br>
+            <p class="text-lg">
+            we use various plugins to improve the player experience. our current plugin list is as follows:
+            </p><br>
+            <ul class="text-lg" style="list-style-type: disc; list-style-position: inside;">
+                <li><strong>BetterRTP</strong> for random teleport (/rtp) feature.</li>
+                <li><strong>Chunky</strong> for chunk pre-generation.</li>
+                <li><strong>ChunkyBorder</strong> for custom worldborders.</li>
+                <li><strong>CoreProtect</strong> for logging player activity and preventing griefing.</li>
+                <li><strong>Dimension Pause</strong> for blocking players from entering specified dimensions.</li>
+                <li><strong>DiscordSRV</strong> for two-way integration between Minecraft and Discord.</li>
+                <li><strong>EssentialsX</strong> for core server commands and utilities.</li>
+                <li><strong>WorldEdit</strong></li>
+                <li><strong>GSit</strong> for allowing players on sit on blocks or other entities.</li>
+                <li><strong>Geyser</strong> for Minecraft: Bedrock Edition cross-compatibility.</li>
+                <li><strong>InteractionVisualizer</strong> for extra in-game animations.</li>
+                <li><strong>LuckPerms</strong> for managing permissions.</li>
+                <li><strong>Maintenance</strong> for restricting access to server easily when there is an ongoing maintenance.</li>
+                <li><strong>OpenInv</strong> for ability to see other players inventories.</li>
+                <li><strong>PlaceholderAPI</strong></li>
+                <li><strong>Plan</strong> for generating detailed server statistics.</li>
+                <li><strong>ProtocolLib</strong></li>
+                <li><strong>PurpurExtras</strong> for extra features and commands.</li>
+                <li><strong>RealisticSeasons</strong> for seasonal gameplay and environmental effects.</li>
+                <li><strong>TAB</strong> for customising the tab menu (player list).</li>
+                <li><strong>TimePauser</strong>: for automatically pausing in-game time when no one is online.</li>
+            </ul>
+        </div>
+
+        <!-- More Builds Tab Panel -->
+        <!-- ADDED data-panel and tab-panel class -->
+        <!-- REMOVED old tab-content class -->
+        <!-- REMOVED: Solid background -->
+        <!-- EDITED: Added px-4 for alignment -->
+        <div id="builds-tab-content" data-panel="builds" class="tab-panel text-black dark:text-white py-12 px-4"> <!-- REMOVED w-full, handled by .tab-panel CSS -->
+            <h2 class="text-4xl font-title-serif mb-4">featured builds</h2>
+            <p class="text-lg">soon(tm)</p>
+        </div>
+
+    </div> <!-- End of #content-area -->
+
+
+    <!-- JavaScript for Slider & Tabs -->
+    <!-- FIXED: Restored full, correct script content -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Original Slider Logic (Unchanged) ---
+            const images = document.querySelectorAll('.slider-image');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            let currentImageIndex = 0;
+            let autoPlayInterval;
+
+            function showImage(index) {
+                images.forEach(img => img.classList.remove('active'));
+                images[index].classList.add('active');
+            }
+
+            function nextImage() {
+                currentImageIndex = (currentImageIndex + 1) % images.length;
+                showImage(currentImageIndex);
+            }
+
+            function prevImage() {
+                currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+                showImage(currentImageIndex);
+            }
+
+            function startAutoPlay() {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = setInterval(nextImage, 5000); // 5 seconds
+            }
+
+            // Check if slider elements exist before adding listeners
+            if (images.length > 0 && prevBtn && nextBtn) {
+                prevBtn.addEventListener('click', () => {
+                    prevImage();
+                    startAutoPlay(); // Reset autoplay timer on manual click
+                });
+
+                nextBtn.addEventListener('click', () => {
+                    nextImage();
+                    startAutoPlay(); // Reset autoplay timer on manual click
+                });
+
+                // Initial setup for slider
+                showImage(currentImageIndex);
+                startAutoPlay();
+            }
+
+
+            // --- REWRITTEN Tab Logic (Simplified, No Shift) ---
+
+            // Select all tab buttons and all tab panels using data attributes
+            const allTabBtns = document.querySelectorAll('[data-tab]');
+            const allPanels = document.querySelectorAll('[data-panel]');
+            // ADDED: Select the animation container
+            const animationContainer = document.querySelector('.animation-container');
+
+            /**
+             * Shows the specified tab panel and highlights the corresponding button.
+             * @param {string} tabName - The name of the tab to show (e.g., "main", "info", "builds")
+             */
+            function showTab(tabName) {
+                // 1. Update all panels
+                allPanels.forEach(panel => {
+                    if (panel.dataset.panel === tabName) {
+                        panel.classList.add('active');
+                    } else {
+                        panel.classList.remove('active');
+                    }
+                });
+
+                // 2. Update all tab buttons
+                allTabBtns.forEach(btn => {
+                    // The 'main' tab (logo) doesn't get a visual "active" state
+                    if (tabName === 'main') {
+                        btn.classList.remove('active-tab');
+                    } else {
+                        // For other tabs, highlight the matching button
+                        if (btn.dataset.tab === tabName) {
+                            btn.classList.add('active-tab');
+                        } else {
+                            btn.classList.remove('active-tab');
+                        }
+                    }
+                });
+
+                // 3. ADDED: Show or hide blobs
+                if (animationContainer) {
+                    if (tabName === 'main') {
+                        animationContainer.classList.add('active');
+                    } else {
+                        animationContainer.classList.remove('active');
+                    }
+                }
+            }
+
+            // Add click event listeners to all tab buttons
+            allTabBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Check if the click is on the already active tab (but not the main logo)
+                    // FIXED: Removed extra dot from btn.dataset.tab
+                    const tabName = btn.dataset.tab;
+                    if (tabName !== 'main' && btn.classList.contains('active-tab')) {
+                        // If clicking active tab, go back to main
+                        showTab('main');
+                    } else {
+                        // Otherwise, just show the clicked tab
+                        showTab(tabName);
+                    }
+                });
+            });
+
+            // Show the main page by default on load
+            showTab('main');
+
+            // --- END REWRITTEN Tab Logic ---
+
+
+            // --- Blob Animation Logic (REWRITTEN for Boundary Box) ---
+
+            // CHANGED: Selects all blobs in the global .animation-container
+            const blobs = document.querySelectorAll('.animation-container .blob');
+            // ADDED: Get the element to use as boundaries
+            const mainPanelElement = document.getElementById('main-panel');
+
+            // ADDED: Object to store the calculated boundaries
+            let animationBounds = {
+                minX: 0,
+                maxX: 0,
+                minY: 0,
+                maxY: 0,
+                centerX: 0,
+                centerY: 0
+            };
+
+            // ADDED: Function to measure the main panel and set boundaries
+            function getAnimationBounds() {
+                if (!mainPanelElement) return;
+
+                // Use getBoundingClientRect for size and position relative to viewport
+                const rect = mainPanelElement.getBoundingClientRect();
+
+                // Use window.scrollX/Y to get positions relative to the DOCUMENT
+                animationBounds.minX = rect.left + window.scrollX;
+                animationBounds.maxX = rect.right + window.scrollX;
+                animationBounds.minY = rect.top + window.scrollY;
+                animationBounds.maxY = rect.bottom + window.scrollY;
+
+                // Calculate the center point
+                animationBounds.centerX = (animationBounds.minX + animationBounds.maxX) / 2;
+                animationBounds.centerY = (animationBounds.minY + animationBounds.maxY) / 2;
+            }
+
+            // Helper function to get a random number in a range
+            function getRandomValue(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            /**
+             * --- FIXED LOGIC ---
+             * Calculates the destination X and Y coordinates, ensuring
+             * the *entire blob* stays within the bounds.
+             */
+            function getBoundedCoordinates(blob) {
+                // Get the blob's size (radius)
+                // We use offsetWidth/2 which is a good approximation
+                const blobRadiusX = blob.offsetWidth / 2;
+                const blobRadiusY = blob.offsetHeight / 2;
+
+                // Calculate the *inset* boundaries for this specific blob
+                const minX = animationBounds.minX + blobRadiusX;
+                const maxX = animationBounds.maxX - blobRadiusX;
+                const minY = animationBounds.minY + blobRadiusY;
+                const maxY = animationBounds.maxY - blobRadiusY;
+
+                // Get random coordinates *within the inset boundaries*
+                const randX_px = getRandomValue(minX, maxX);
+                const randY_px = getRandomValue(minY, maxY);
+
+                return { x: randX_px, y: randY_px };
+            }
+
+
+            // Function for the first, faster move from the center
+            function moveBlobInitial(blob) {
+                // CHANGED: Use the new function to get correct coordinates
+                const { x, y } = getBoundedCoordinates(blob);
+
+                const randScale = getRandomValue(1.2, 1.8);
+                const randDuration = getRandomValue(3, 5);
+
+                // Define keyframes for the initial animation
+                // CHANGED: Animate 'left' and 'top' using pixel values
+                const keyframes = {
+                    left: [`${animationBounds.centerX}px`, `${x}px`],
+                    top: [`${animationBounds.centerY}px`, `${y}px`],
+                    transform: [
+                        'translate(-50%, -50%) scale(1)', // Start state
+                        `translate(-50%, -50%) scale(${randScale})` // End state
+                    ],
+                    opacity: [0, 1] // Fade in
+                };
+
+                // Define timing options
+                const options = {
+                    duration: randDuration * 1000, // Duration in milliseconds
+                    easing: 'ease-in-out',
+                    fill: 'forwards' // Keep the end state
+                };
+
+                // Run the animation
+                const animation = blob.animate(keyframes, options);
+
+                // When this animation finishes, start the continuous movement loop
+                animation.onfinish = () => moveBlob(blob);
+            }
+
+            // Function for all subsequent, continuous moves
+            function moveBlob(blob) {
+                // CHANGED: Use the new function to get correct coordinates
+                const { x, y } = getBoundedCoordinates(blob);
+
+                const randScale = getRandomValue(1.2, 1.8);
+                const randDuration = getRandomValue(10, 20);
+
+                // Define keyframes (only the 'to' state is needed, 'from' is automatic)
+                // CHANGED: Animate 'left' and 'top' using pixel values
+                const keyframes = {
+                    left: `${x}px`,
+                    top: `${y}px`,
+                    transform: `translate(-50%, -50%) scale(${randScale})`
+                };
+
+                // Define timing options
+                const options = {
+                    duration: randDuration * 1000,
+                    easing: 'ease-in-out',
+                    fill: 'forwards'
+                };
+
+                // Run the animation
+                const animation = blob.animate(keyframes, options);
+
+                // When this animation finishes, call this function again to loop
+                animation.onfinish = () => moveBlob(blob);
+            }
+
+            // Check if blobs exist before adding listeners
+            if (blobs.length > 0 && mainPanelElement) {
+                // ADDED: Calculate the boundaries on load
+                getAnimationBounds();
+
+                // ADDED: Recalculate boundaries on window resize
+                window.addEventListener('resize', getAnimationBounds);
+
+                blobs.forEach(blob => {
+                    // ADDED: Set the initial starting position to the center of the box
+                    blob.style.left = `${animationBounds.centerX}px`;
+                    blob.style.top = `${animationBounds.centerY}px`;
+
+                    // Start the FIRST move for each blob
+                    setTimeout(() => {
+                        moveBlobInitial(blob); // Call the new initial move function
+                    }, 100);
+                });
+            }
+            // --- END: Blob Animation Logic ---
+
+
+            // --- ADDED: Hero Panel Flip Logic ---
+            const mainPanel = document.getElementById('main-panel');
+            const howToPlayBtn = document.getElementById('how-to-play-btn');
+            const backToMainBtn = document.getElementById('back-to-main-btn');
+
+            if (mainPanel && howToPlayBtn && backToMainBtn) {
+                howToPlayBtn.addEventListener('click', () => {
+                    mainPanel.classList.add('is-flipped');
+                });
+
+                backToMainBtn.addEventListener('click', () => {
+                    mainPanel.classList.remove('is-flipped');
+                });
+            }
+            // --- END: Hero Panel Flip Logic ---
+
+        });
+    </script>
+
+</body>
+</html>
+
