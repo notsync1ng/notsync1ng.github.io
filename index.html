@@ -24,6 +24,7 @@
     <!-- END: Meta Tags for Link Embeds -->
 
     <link href="./output.css" rel="stylesheet">
+    <link href="./scrollfix.css" rel="stylesheet">
 
     <!-- Google Fonts (for fallback and body) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -186,7 +187,7 @@
                 <!-- UPDATED: Changed dark:bg-gray-900 to dark:bg-black and added inner shadow for outline -->
                 <!-- UPDATED: Added rounded-2xl to match parent panel -->
                 <!-- NOTE: overflow-y-auto is KEPT to enable scrolling, CSS rule hides the bar -->
-                <div id="hero-panel-back" class="absolute inset-0 transition-all duration-500 ease-in-out z-20 bg-white dark:bg-black text-black dark:text-white p-8 opacity-0 invisible overflow-y-auto shadow-[inset_0_0_0_2px_#dedede] dark:shadow-[inset_0_0_0_2px_#141414] rounded-2xl">
+                <div id="hero-panel-back" class="absolute inset-0 transition-all duration-500 ease-in-out z-20 bg-white dark:bg-black text-black dark:text-white p-8 opacity-0 invisible shadow-[inset_0_0_0_2px_#dedede] dark:shadow-[inset_0_0_0_2px_#141414] rounded-2xl">
                     <!-- Content for the back -->
                     <div class="max-w-3xl mx-auto">
                         <button id="back-to-main-btn" class="mb-4 text-lg font-semibold text-blue-600 dark:text-blue-400 hover:underline">
@@ -715,6 +716,12 @@
             });
         });
     </script>
+
+
+    <footer>
+    <p>Osprey, EST 2020.</p>
+  </footer>
+
 
 </body>
 </html>

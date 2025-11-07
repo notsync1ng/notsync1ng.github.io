@@ -1,0 +1,47 @@
+/* -----------------------------------------
+ *  1️⃣ Make the container a positioning context
+ *  ------------------------------------------- */
+#content-area {
+position: relative;          /* already a grid, now also a context */
+}
+
+/* -------------------------------------------
+ *  2️⃣ Base style for every tab panel
+ *  ------------------------------------------------ */
+.tab-panel {
+    /* Stay in the normal flow so the container can size itself */
+    display: none;        /* hidden by default */
+    width: 100%;
+    /* Allow internal scrolling if a panel’s content overflows */
+    overflow-y: auto;
+    /* Fade‑in/out animation – works when we toggle display via JS */
+    opacity: 0;
+    transition: opacity 200ms ease-in-out;
+}
+
+/* -------------------------------------------
+ *  3️⃣ The panel that is currently active
+ *  ------------------------------------------------- */
+.tab-panel.active {
+    display: block;         /* make it participate in layout */
+    opacity: 1;                  /* fade‑in */
+}
+
+/* ---------------------------------------
+ *  4️⃣ (Optional) keep it hidden from screen‑readers
+ *  ------------------------------------------------- */
+.tab-panel:not(.active) {
+    visibility: hidden;          /* accessibility‑friendly */
+}
+
+/* ----------------------------------------------------------
+ M ake the “How do I join?” panel scrollable when its content is tal*l
+ ------------------------------------------------------- */
+#hero-panel-back {
+overflow-y: auto;          /* enable vertical scrolling */
+}
+
+/* (optional) hide the native scrollbar – you already have a utility
+ t hat does this for other elements, e.g. .hide-scrollbar */        *
+ #hero-panel-back::-webkit-scrollbar { display: none; }
+ #hero-panel-back { -ms-overflow-style: none; scrollbar-width: none; }
